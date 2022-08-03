@@ -27,7 +27,8 @@ if (!array_key_exists($caminho, $rotas)) {
 }
 
 $db = parse_url(getenv("DATABASE_URL"));
-var_dump($db);
+$db["path"] = ltrim($db["path"], "/");
+
 // $conexao = new Conexao(
 //     $db["host"],
 //     $db["port"],
