@@ -1,0 +1,18 @@
+{
+    "name": "deivz/api-rest-controle-financeiro",
+    "description": "REST API criada para o Challenge Back End #4 da Alura voltada para controle financeiro",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Deivz\\ApiRestControleFinanceiro\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Deivz",
+            "email": "carlosd_oliveira@hotmail.com"
+        }
+    ],
+    "require": {}
+}
