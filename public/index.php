@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-// use Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler;
-use Deivz\TratamentoArquivosCsv\infrastructure\Conexao;
+use Deivz\ApiRestControleFinanceiro\controllers\CriadorConexao;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-// $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-// $dotenv->load();
-
 set_exception_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleException");
-echo "\n";
+
+$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '\..');
+$dotenv->load();
+
 header('Content-type: application/json; charset = UTF-8');
 
 $caminho = $_SERVER['PATH_INFO'];
@@ -26,17 +25,10 @@ if (!array_key_exists($caminho, $rotas)) {
    ]);
 }
 
-$db = parse_url(getenv("DATABASE_URL"));
+$db = parse_url($_ENV["DATABASE_URL"]);
 $db["path"] = ltrim($db["path"], "/");
-
-// $conexao = new Conexao(
-//     $db["host"],
-//     $db["port"],
-//     $db["user"],
-//     $db["pass"],
-// );
-// $conexao->conectar();
+$conexao = new CriadorConexao($db["host"], $db["port"], $db["user"], $db["pass"], $db["path"]);
 
 $classeControladora = $rotas[$caminho];
-$controlador = new $classeControladora();
+$controlador = new $classeControladora($conexao);
 $controlador->processarRequisicao($_SERVER['REQUEST_METHOD']);
