@@ -14,10 +14,13 @@ $dotenv->load();
 header('Content-type: application/json; charset = UTF-8');
 
 $caminho = $_SERVER['PATH_INFO'];
+$partes = explode('/', $caminho);
+$rota = "/{$partes[1]}";
+$id = $partes[2] ?? null;
 
 $rotas = require __DIR__ . '/../config/routes.php';
 
-if (!array_key_exists($caminho, $rotas)) {
+if (!array_key_exists($rota, $rotas)) {
    http_response_code(404);
    echo json_encode([
       'message' => 'Page not found',
@@ -29,6 +32,6 @@ $db = parse_url($_ENV["DATABASE_URL"]);
 $db["path"] = ltrim($db["path"], "/");
 $conexao = new CriadorConexao($db["host"], $db["port"], $db["user"], $db["pass"], $db["path"]);
 
-$classeControladora = $rotas[$caminho];
+$classeControladora = $rotas[$rota];
 $controlador = new $classeControladora($conexao);
-$controlador->processarRequisicao($_SERVER['REQUEST_METHOD']);
+$controlador->processarRequisicao($_SERVER['REQUEST_METHOD'], $id);

@@ -13,29 +13,43 @@ class Receitas
         $this->conexao = $conexao->conectar();
     }
 
-    public function processarRequisicao($metodo)
+    public function processarRequisicao(string $metodo, ?string $id): void
     {
         switch ($metodo) {
             case 'GET':
-                $receitas = $this->getReceitas();
+                if ($id === null) {
+                    echo json_encode($this->getReceitas());
+                    break;
+                }
 
-                // echo json_encode([
-                //     ""
-                // ]);
-            
+                if ($this->getReceitasById($id)) {
+                    echo json_encode($this->getReceitasById($id));
+                    break;
+                }
+                http_response_code(404);
+                echo json_encode([
+                    "mensagem" => "Receita não encontrada",
+                    "codigo" => "404"
+                ]);
                 break;
-            
+
             case 'POST':
                 $reqData = (array) json_decode(file_get_contents("php://input"));
+
+                if ($this->checarExistenciaNoBanco($reqData)) {
+                    echo json_encode([
+                        'mensagem' => 'Receita já cadastrada.'
+                    ]);
+                    break;
+                }
+
                 $id = $this->postReceitas($reqData);
-                
                 echo json_encode([
                     'id' => $id,
                     'mensagem' => 'Receita inserida com sucesso'
                 ]);
-
                 break;
-            
+
             default:
                 echo "chamou o default";
                 break;
@@ -44,12 +58,37 @@ class Receitas
 
     public function getReceitas()
     {
-        $receitas = [];
         $sql = "SELECT * FROM receitas";
         $stmt = $this->conexao->query($sql);
-        $receitas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $receitas = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $receitas[] = $row;
+        }
 
         return $receitas;
+    }
+
+    public function getReceitasById($id)
+    {
+        $sql = "SELECT * FROM receitas WHERE id = :id;";
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(":id", $id, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function checarExistenciaNoBanco($reqData): bool
+    {
+        $sql = "SELECT * FROM receitas WHERE (descricao = :descricao) AND (data = :data);";
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(":descricao", $reqData['descricao'], PDO::PARAM_STR);
+        $stmt->bindValue(":data", $reqData['data'], PDO::PARAM_STR);
+        $stmt->execute();
+        if ($stmt->rowCount() >= 1) {
+            return true;
+        }
+        return false;
     }
 
     public function postReceitas($reqData): string
