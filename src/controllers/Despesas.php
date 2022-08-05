@@ -4,7 +4,7 @@ namespace Deivz\ApiRestControleFinanceiro\controllers;
 
 use PDO;
 
-class Receitas
+class Despesas
 {
     private PDO $conexao;
 
@@ -18,17 +18,17 @@ class Receitas
         switch ($metodo) {
             case 'GET':
                 if ($id === null) {
-                    echo json_encode($this->getReceitas());
+                    echo json_encode($this->getDespesas());
                     break;
                 }
 
-                if ($this->getReceitasById($id)) {
-                    echo json_encode($this->getReceitasById($id));
+                if ($this->getDespesasById($id)) {
+                    echo json_encode($this->getDespesasById($id));
                     break;
                 }
                 http_response_code(404);
                 echo json_encode([
-                    "mensagem" => "Receita não encontrada",
+                    "mensagem" => "Despesa não encontrada",
                     "codigo" => "404"
                 ]);
                 break;
@@ -47,16 +47,16 @@ class Receitas
                 if ($this->checarExistenciaNoBanco($dadosRequisicao)) {
                     http_response_code(422);
                     echo json_encode([
-                        'mensagem' => 'Receita já cadastrada.'
+                        'mensagem' => 'Despesa já cadastrada.'
                     ]);
                     break;
                 }
 
-                $idRequisicao = $this->postReceitas($dadosRequisicao);
+                $idRequisicao = $this->postDespesas($dadosRequisicao);
                 http_response_code(201);
                 echo json_encode([
                     'id' => $idRequisicao,
-                    'mensagem' => 'Receita inserida com sucesso'
+                    'mensagem' => 'Despesa inserida com sucesso'
                 ]);
                 break;
 
@@ -64,7 +64,7 @@ class Receitas
                 if ($id === null) {
                     http_response_code(404);
                     echo json_encode([
-                        'mensagem' => 'Receita não identificada'
+                        'mensagem' => 'Despesa não identificada'
                     ]);
                     break;
                 }
@@ -82,15 +82,15 @@ class Receitas
                 if ($this->checarExistenciaNoBanco($dadosRequisicao, $id)) {
                     http_response_code(422);
                     echo json_encode([
-                        'mensagem' => 'Receita já cadastrada.'
+                        'mensagem' => 'Despesa já cadastrada.'
                     ]);
                     break;
                 }
 
-                $linha = $this->putReceitas($dadosRequisicao, $id);
+                $linha = $this->putDespesas($dadosRequisicao, $id);
                 echo json_encode([
                     'linhas' => $linha,
-                    'mensagem' => "Receita {$id} atualizada com sucesso"
+                    'mensagem' => "Despesa {$id} atualizada com sucesso"
                 ]);
                 break;
 
@@ -98,36 +98,36 @@ class Receitas
                 if ($id === null) {
                     http_response_code(404);
                     echo json_encode([
-                        'mensagem' => 'Receita não identificada'
+                        'mensagem' => 'Despesa não identificada'
                     ]);
                     break;
                 }
 
-                $linha = $this->deleteReceitas($id);
+                $linha = $this->deleteDespesas($id);
                 echo json_encode([
                     'linhas' => $linha,
-                    'mensagem' => "Receita {$id} deletada com sucesso"
+                    'mensagem' => "Despesa {$id} deletada com sucesso"
                 ]);
                 break;
         }
     }
 
-    private function getReceitas(): array
+    private function getDespesas(): array
     {
-        $sql = "SELECT * FROM receitas";
+        $sql = "SELECT * FROM despesas";
         $stmt = $this->conexao->query($sql);
-        $receitas = [];
+        $despesas = [];
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $receitas[] = $row;
+            $despesas[] = $row;
         }
 
-        return $receitas;
+        return $despesas;
     }
 
-    private function getReceitasById(string $id): array|false
+    private function getDespesasById(string $id): array|false
     {
-        $sql = "SELECT * FROM receitas WHERE id = :id;";
+        $sql = "SELECT * FROM despesas WHERE id = :id;";
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -136,7 +136,7 @@ class Receitas
 
     private function checarExistenciaNoBanco(array $dadosRequisicao, string $id = null): bool
     {
-        $sql = "SELECT * FROM receitas WHERE (descricao = :descricao) AND (data = :data);";
+        $sql = "SELECT * FROM despesas WHERE (descricao = :descricao) AND (data = :data);";
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(":descricao", $dadosRequisicao['descricao'], PDO::PARAM_STR);
         $stmt->bindValue(":data", $dadosRequisicao['data'], PDO::PARAM_STR);
@@ -180,9 +180,9 @@ class Receitas
         return $erros;
     }
 
-    private function postReceitas(array $dadosRequisicao): int
+    private function postDespesas(array $dadosRequisicao): int
     {
-        $sql = "INSERT INTO receitas (descricao, valor, data) VALUES(:descricao, :valor, :data);";
+        $sql = "INSERT INTO despesas (descricao, valor, data) VALUES(:descricao, :valor, :data);";
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(":descricao", $dadosRequisicao['descricao'], PDO::PARAM_STR);
         $stmt->bindValue(":valor", $dadosRequisicao['valor'], PDO::PARAM_STR);
@@ -192,9 +192,9 @@ class Receitas
         return $this->conexao->lastInsertId();
     }
 
-    private function putReceitas(array $dadosRequisicao, string $id): int
+    private function putDespesas(array $dadosRequisicao, string $id): int
     {
-        $sql = "UPDATE receitas
+        $sql = "UPDATE despesas
                 SET descricao = :descricao, valor = :valor, data = :data
                 WHERE id = :id;";
         $stmt = $this->conexao->prepare($sql);
@@ -207,9 +207,9 @@ class Receitas
         return $stmt->rowCount();
     }
 
-    private function deleteReceitas(string $id): int
+    private function deleteDespesas(string $id): int
     {
-        $sql = "DELETE FROM receitas WHERE id = :id;";
+        $sql = "DELETE FROM despesas WHERE id = :id;";
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
