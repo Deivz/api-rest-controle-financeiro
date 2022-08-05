@@ -52,9 +52,10 @@ class Receitas
                     break;
                 }
 
-                $id = $this->postReceitas($dadosRequisicao);
+                $idRequisicao = $this->postReceitas($dadosRequisicao);
+                http_response_code(201);
                 echo json_encode([
-                    'id' => $id,
+                    'id' => $idRequisicao,
                     'mensagem' => 'Receita inserida com sucesso'
                 ]);
                 break;
@@ -86,10 +87,26 @@ class Receitas
                     break;
                 }
 
-                $id = $this->putReceitas($dadosRequisicao, $id);
+                $linha = $this->putReceitas($dadosRequisicao, $id);
                 echo json_encode([
-                    'id' => $id,
-                    'mensagem' => 'Receita atualizada com sucesso'
+                    'linhas' => $linha,
+                    'mensagem' => "Receita {$id} atualizada com sucesso"
+                ]);
+                break;
+
+            case 'DELETE':
+                if ($id === null) {
+                    http_response_code(404);
+                    echo json_encode([
+                        'mensagem' => 'Receita não identificada'
+                    ]);
+                    break;
+                }
+
+                $linha = $this->deleteReceitas($id);
+                echo json_encode([
+                    'linhas' => $linha,
+                    'mensagem' => "Receita {$id} deletada com sucesso"
                 ]);
                 break;
         }
@@ -108,11 +125,11 @@ class Receitas
         return $receitas;
     }
 
-    private function getReceitasById(string $id): array|bool
+    private function getReceitasById(string $id): array|false
     {
         $sql = "SELECT * FROM receitas WHERE id = :id;";
         $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":id", $id, PDO::PARAM_STR);
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -140,6 +157,8 @@ class Receitas
             }
             return true;
         }
+
+        return false;
     }
 
     private function validarDados(array $dadosRequisicao): array
@@ -161,7 +180,7 @@ class Receitas
         return $erros;
     }
 
-    private function postReceitas(array $dadosRequisicao): string
+    private function postReceitas(array $dadosRequisicao): int
     {
         $sql = "INSERT INTO receitas (descricao, valor, data) VALUES(:descricao, :valor, :data);";
         $stmt = $this->conexao->prepare($sql);
@@ -173,7 +192,7 @@ class Receitas
         return $this->conexao->lastInsertId();
     }
 
-    private function putReceitas(array $dadosRequisicao, string $id): string
+    private function putReceitas(array $dadosRequisicao, string $id): int
     {
         $sql = "UPDATE receitas
                 SET descricao = :descricao, valor = :valor, data = :data
@@ -182,9 +201,19 @@ class Receitas
         $stmt->bindValue(":descricao", $dadosRequisicao['descricao'], PDO::PARAM_STR);
         $stmt->bindValue(":valor", $dadosRequisicao['valor'], PDO::PARAM_STR);
         $stmt->bindValue(":data", $dadosRequisicao['data'], PDO::PARAM_STR);
-        $stmt->bindValue(":id", $id, PDO::PARAM_STR);
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $id;
+        return $stmt->rowCount();
+    }
+
+    private function deleteReceitas(string $id): int
+    {
+        $sql = "DELETE FROM receitas WHERE id = :id;";
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount();
     }
 }
