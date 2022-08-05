@@ -9,14 +9,13 @@ require __DIR__ . '/../vendor/autoload.php';
 set_error_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleError");
 set_exception_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleException");
 
-// $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-// $dotenv->load();
+$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
 
 header('Content-type: application/json; charset = UTF-8');
 
-$caminho = $_SERVER['PATH_INFO'];
-$partes = explode('/', $caminho);
-$rota = "/{$partes[1]}";
+$partes = explode('/', $_SERVER['REQUEST_URI']);
+$rota = $partes[1];
 $id = $partes[2] ?? null;
 
 $rotas = require __DIR__ . '/../config/routes.php';
