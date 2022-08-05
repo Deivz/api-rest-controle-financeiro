@@ -2,6 +2,7 @@
 
 namespace Deivz\ApiRestControleFinanceiro\helpers;
 
+use ErrorException;
 use Throwable;
 
 class ErrorHandler
@@ -15,5 +16,15 @@ class ErrorHandler
             "arquivo" => $exception->getFile(),
             "linha" => $exception->getLine()
         ]);
+    }
+
+    public static function handleError(
+        int $errNumber,
+        string $errString,
+        string $errFile,
+        int $errLine
+    )
+    {
+        throw new ErrorException($errString, 0, $errNumber, $errFile, $errLine);
     }
 }

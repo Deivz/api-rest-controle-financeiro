@@ -6,6 +6,7 @@ use Deivz\ApiRestControleFinanceiro\controllers\CriadorConexao;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+set_error_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleError");
 set_exception_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleException");
 
 $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '\..');
