@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Deivz\ApiRestControleFinanceiro\controllers\CriadorConexao;
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 set_error_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleError");
 set_exception_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleException");
