@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 use Deivz\ApiRestControleFinanceiro\controllers\CriadorConexao;
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 set_error_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleError");
 set_exception_handler("Deivz\ApiRestControleFinanceiro\helpers\ErrorHandler::handleException");
 
-// $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__);
-// $dotenv->load();
+
+if (file_exists(__DIR__ . '/../.env')) {
+   $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ .'/..');
+   $dotenv->load();
+}
 
 header('Content-type: application/json; charset = UTF-8');
 
@@ -18,7 +21,7 @@ $partes = explode('/', $_SERVER['REQUEST_URI']);
 $rota = $partes[1];
 $id = $partes[2] ?? null;
 
-$rotas = require __DIR__ . '/config/routes.php';
+$rotas = require __DIR__ . '/../config/routes.php';
 
 if (!array_key_exists($rota, $rotas)) {
    http_response_code(404);
