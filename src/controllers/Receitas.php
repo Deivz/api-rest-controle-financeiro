@@ -13,19 +13,26 @@ class Receitas
         $this->conexao = $conexao->conectar();
     }
 
-    public function processarRequisicao(string $metodo, ?string $id): void
+    public function processarRequisicao(string $metodo, ?string $id, ?string $query): void
     {
         switch ($metodo) {
             case 'GET':
-                if ($id === null) {
+                if ($id === null && !isset($query)) {
                     echo json_encode($this->getReceitas());
                     break;
                 }
 
-                if ($this->getReceitasById($id)) {
+                if ($id !== null && $this->getReceitasById($id)) {
                     echo json_encode($this->getReceitasById($id));
                     break;
                 }
+
+                $descricao = $_GET['descricao'];
+                if ($this->getReceitasByDescricao($descricao)) {
+                    echo json_encode($this->getReceitasByDescricao($descricao));
+                    break;
+                }
+
                 http_response_code(404);
                 echo json_encode([
                     "mensagem" => "Receita não encontrada",
@@ -132,6 +139,21 @@ class Receitas
         $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function getReceitasByDescricao(string $descricao): array|false
+    {
+        $sql = "SELECT * FROM receitas WHERE descricao LIKE :descricao;";
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(":descricao", "%$descricao%", PDO::PARAM_INT);
+        $stmt->execute();
+        $receitas = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $receitas[] = $row;
+        }
+
+        return $receitas;
     }
 
     private function checarExistenciaNoBanco(array $dadosRequisicao, string $id = null): bool

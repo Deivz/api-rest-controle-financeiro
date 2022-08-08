@@ -13,19 +13,26 @@ class Despesas
         $this->conexao = $conexao->conectar();
     }
 
-    public function processarRequisicao(string $metodo, ?string $id): void
+    public function processarRequisicao(string $metodo, ?string $id, ?string $query): void
     {
         switch ($metodo) {
             case 'GET':
-                if ($id === null) {
+                if ($id === null && !isset($query)) {
                     echo json_encode($this->getDespesas());
                     break;
                 }
 
-                if ($this->getDespesasById($id)) {
+                if ($id !== null && $this->getDespesasById($id)) {
                     echo json_encode($this->getDespesasById($id));
                     break;
                 }
+
+                $descricao = $_GET['descricao'];
+                if ($this->getDespesasByDescricao($descricao)) {
+                    echo json_encode($this->getDespesasByDescricao($descricao));
+                    break;
+                }
+
                 http_response_code(404);
                 echo json_encode([
                     "mensagem" => "Despesa não encontrada",
@@ -132,6 +139,21 @@ class Despesas
         $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function getDespesasByDescricao(string $descricao): array|false
+    {
+        $sql = "SELECT * FROM despesas WHERE descricao LIKE :descricao;";
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(":descricao", "%$descricao%", PDO::PARAM_INT);
+        $stmt->execute();
+        $despesas = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $despesas[] = $row;
+        }
+
+        return $despesas;
     }
 
     private function checarExistenciaNoBanco(array $dadosRequisicao, string $id = null): bool
