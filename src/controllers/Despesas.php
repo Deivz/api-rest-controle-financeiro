@@ -164,6 +164,7 @@ class Despesas
     private function validarDados(array $dadosRequisicao): array
     {
         $erros = [];
+        $categorias = ["Alimentação", "Saúde", "Moradia", "Transporte", "Educação", "Lazer", "Imprevistos", "Outras"];
 
         if (empty($dadosRequisicao['descricao'])) {
             $erros[] = "O campo descrição é obrigatório";
@@ -177,16 +178,28 @@ class Despesas
             $erros[] = "O campo data é obrigatório";
         }
 
+        if(!in_array($dadosRequisicao['categoria'], $categorias) && !empty($dadosRequisicao['categoria'])){
+            $erros[] = "Categoria inválida";
+        }
+
         return $erros;
     }
 
     private function postDespesas(array $dadosRequisicao): int
     {
-        $sql = "INSERT INTO despesas (descricao, valor, data) VALUES(:descricao, :valor, :data);";
+        
+        $sql = "INSERT INTO despesas (descricao, valor, data, categoria) VALUES(:descricao, :valor, :data, :categoria);";
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(":descricao", $dadosRequisicao['descricao'], PDO::PARAM_STR);
         $stmt->bindValue(":valor", $dadosRequisicao['valor'], PDO::PARAM_STR);
         $stmt->bindValue(":data", $dadosRequisicao['data'], PDO::PARAM_STR);
+
+        if(empty($dadosRequisicao['categoria'])){
+            $stmt->bindValue(":categoria", "Outras", PDO::PARAM_STR);
+        }else{
+            $stmt->bindValue(":categoria", $dadosRequisicao['categoria'], PDO::PARAM_STR);
+        }
+
         $stmt->execute();
 
         return $this->conexao->lastInsertId();
