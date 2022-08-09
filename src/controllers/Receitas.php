@@ -13,17 +13,22 @@ class Receitas
         $this->conexao = $conexao->conectar();
     }
 
-    public function processarRequisicao(string $metodo, ?string $id, ?string $query): void
+    public function processarRequisicao(string $metodo, ?string $idOuAno, ?string $mes, ?string $query): void
     {
         switch ($metodo) {
             case 'GET':
-                if ($id === null && !isset($query)) {
+                if ($idOuAno === null && !isset($query) && !isset($mes)) {
                     echo json_encode($this->getReceitas());
                     break;
                 }
 
-                if ($id !== null && $this->getReceitasById($id)) {
-                    echo json_encode($this->getReceitasById($id));
+                if ($idOuAno !== null && $this->getReceitasById($idOuAno) && !isset($mes)) {
+                    echo json_encode($this->getReceitasById($idOuAno));
+                    break;
+                }
+
+                if ($idOuAno !== null && !isset($query) && isset($mes)) {
+                    echo json_encode($this->getReceitasByDate($idOuAno, $mes));
                     break;
                 }
 
@@ -68,7 +73,7 @@ class Receitas
                 break;
 
             case 'PUT':
-                if ($id === null) {
+                if ($idOuAno === null) {
                     http_response_code(404);
                     echo json_encode([
                         'mensagem' => 'Receita não identificada'
@@ -86,7 +91,7 @@ class Receitas
                     break;
                 }
 
-                if ($this->checarExistenciaNoBanco($dadosRequisicao, $id)) {
+                if ($this->checarExistenciaNoBanco($dadosRequisicao, $idOuAno)) {
                     http_response_code(422);
                     echo json_encode([
                         'mensagem' => 'Receita já cadastrada.'
@@ -94,15 +99,15 @@ class Receitas
                     break;
                 }
 
-                $linha = $this->putReceitas($dadosRequisicao, $id);
+                $linha = $this->putReceitas($dadosRequisicao, $idOuAno);
                 echo json_encode([
                     'linhas' => $linha,
-                    'mensagem' => "Receita {$id} atualizada com sucesso"
+                    'mensagem' => "Receita {$idOuAno} atualizada com sucesso"
                 ]);
                 break;
 
             case 'DELETE':
-                if ($id === null) {
+                if ($idOuAno === null) {
                     http_response_code(404);
                     echo json_encode([
                         'mensagem' => 'Receita não identificada'
@@ -110,10 +115,10 @@ class Receitas
                     break;
                 }
 
-                $linha = $this->deleteReceitas($id);
+                $linha = $this->deleteReceitas($idOuAno);
                 echo json_encode([
                     'linhas' => $linha,
-                    'mensagem' => "Receita {$id} deletada com sucesso"
+                    'mensagem' => "Receita {$idOuAno} deletada com sucesso"
                 ]);
                 break;
         }
@@ -139,6 +144,22 @@ class Receitas
         $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function getReceitasByDate(string $ano, string $mes): array|false
+    {
+        $sql = "SELECT * FROM receitas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes";
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
+        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
+        $stmt->execute();
+        $receitas = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $receitas[] = $row;
+        }
+
+        return $receitas;
     }
 
     private function getReceitasByDescricao(string $descricao): array|false

@@ -13,17 +13,22 @@ class Despesas
         $this->conexao = $conexao->conectar();
     }
 
-    public function processarRequisicao(string $metodo, ?string $id, ?string $query): void
+    public function processarRequisicao(string $metodo, ?string $idOuAno, ?string $mes, ?string $query): void
     {
         switch ($metodo) {
             case 'GET':
-                if ($id === null && !isset($query)) {
+                if ($idOuAno === null && !isset($query) && !isset($mes)) {
                     echo json_encode($this->getDespesas());
                     break;
                 }
 
-                if ($id !== null && $this->getDespesasById($id)) {
-                    echo json_encode($this->getDespesasById($id));
+                if ($idOuAno !== null && $this->getDespesasById($idOuAno) && !isset($mes)) {
+                    echo json_encode($this->getDespesasById($idOuAno));
+                    break;
+                }
+
+                if ($idOuAno !== null && !isset($query) && isset($mes)) {
+                    echo json_encode($this->getDespesasByDate($idOuAno, $mes));
                     break;
                 }
 
@@ -68,7 +73,7 @@ class Despesas
                 break;
 
             case 'PUT':
-                if ($id === null) {
+                if ($idOuAno === null) {
                     http_response_code(404);
                     echo json_encode([
                         'mensagem' => 'Despesa não identificada'
@@ -86,7 +91,7 @@ class Despesas
                     break;
                 }
 
-                if ($this->checarExistenciaNoBanco($dadosRequisicao, $id)) {
+                if ($this->checarExistenciaNoBanco($dadosRequisicao, $idOuAno)) {
                     http_response_code(422);
                     echo json_encode([
                         'mensagem' => 'Despesa já cadastrada.'
@@ -94,15 +99,15 @@ class Despesas
                     break;
                 }
 
-                $linha = $this->putDespesas($dadosRequisicao, $id);
+                $linha = $this->putDespesas($dadosRequisicao, $idOuAno);
                 echo json_encode([
                     'linhas' => $linha,
-                    'mensagem' => "Despesa {$id} atualizada com sucesso"
+                    'mensagem' => "Despesa {$idOuAno} atualizada com sucesso"
                 ]);
                 break;
 
             case 'DELETE':
-                if ($id === null) {
+                if ($idOuAno === null) {
                     http_response_code(404);
                     echo json_encode([
                         'mensagem' => 'Despesa não identificada'
@@ -110,10 +115,10 @@ class Despesas
                     break;
                 }
 
-                $linha = $this->deleteDespesas($id);
+                $linha = $this->deleteDespesas($idOuAno);
                 echo json_encode([
                     'linhas' => $linha,
-                    'mensagem' => "Despesa {$id} deletada com sucesso"
+                    'mensagem' => "Despesa {$idOuAno} deletada com sucesso"
                 ]);
                 break;
         }
@@ -139,6 +144,22 @@ class Despesas
         $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function getDespesasByDate(string $ano, string $mes): array|false
+    {
+        $sql = "SELECT * FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes";
+        $stmt = $this->conexao->prepare($sql);
+        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
+        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
+        $stmt->execute();
+        $despesas = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $despesas[] = $row;
+        }
+
+        return $despesas;
     }
 
     private function getDespesasByDescricao(string $descricao): array|false

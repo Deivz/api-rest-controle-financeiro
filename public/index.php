@@ -18,10 +18,12 @@ if (file_exists(__DIR__ . '/../.env')) {
 header('Content-type: application/json; charset = UTF-8');
 
 $partes = explode('/', $_SERVER['REQUEST_URI']);
+
 $url = explode('?', $partes[1]);
 $rota = $url[0];
 $query = $url[1] ?? null;
-$id = $partes[2] ?? null;
+$idOuAno = $partes[2] ?? null;
+$mes = $partes[3] ?? null;
 
 $rotas = require __DIR__ . '/../config/routes.php';
 
@@ -39,4 +41,4 @@ $conexao = new CriadorConexao($db["host"], $db["port"], $db["user"], $db["pass"]
 
 $classeControladora = $rotas[$rota];
 $controlador = new $classeControladora($conexao);
-$controlador->processarRequisicao($_SERVER['REQUEST_METHOD'], $id, $query);
+$controlador->processarRequisicao($_SERVER['REQUEST_METHOD'], $idOuAno, $mes, $query);
