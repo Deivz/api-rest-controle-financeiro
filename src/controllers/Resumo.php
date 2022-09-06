@@ -19,6 +19,7 @@ class Resumo
             case 'GET':
                 if ($idOuAno !== null && !isset($query) && isset($mes)) {
                     echo json_encode($this->formatarDadosDoResumo($idOuAno, $mes));
+                    // var_dump($this->getResumoByCategoria($idOuAno, $mes));
                     break;
                 }
 
@@ -55,61 +56,16 @@ class Resumo
     {
         $resumo = [];
 
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Alimentação';";
+        $sql = "SELECT SUM(valor), categoria FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes GROUP BY categoria;";
         $stmt = $this->conexao->prepare($sql);
         $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
         $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
         $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
+        $resumo = [];
 
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Saúde';";
-        $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
-        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
-        $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Moradia';";
-        $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
-        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
-        $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Transporte';";
-        $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
-        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
-        $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Educação';";
-        $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
-        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
-        $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Lazer';";
-        $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
-        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
-        $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Imprevistos';";
-        $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
-        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
-        $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        $sql = "SELECT SUM(valor) FROM despesas WHERE EXTRACT(YEAR FROM data) = :ano AND EXTRACT(MONTH FROM data) = :mes AND categoria = 'Outras';";
-        $stmt = $this->conexao->prepare($sql);
-        $stmt->bindValue(":ano", $ano, PDO::PARAM_INT);
-        $stmt->bindValue(":mes", $mes, PDO::PARAM_INT);
-        $stmt->execute();
-        $resumo[] = $stmt->fetch(PDO::FETCH_ASSOC);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $resumo[] = $row;
+        }
 
         return $resumo;
     }
@@ -121,28 +77,12 @@ class Resumo
         $resumoDasDespesas = floatval($valoresResumo[1]);
 
         $resumoCategoria = $this->getResumoByCategoria($idOuAno, $mes);
-        $valoresCategoria = array_column($resumoCategoria, 'sum');
-        $categoriaAlimentacao = floatval($valoresCategoria[0]);
-        $categoriaSaude = floatval($valoresCategoria[1]);
-        $categoriaMoradia = floatval($valoresCategoria[2]);
-        $categoriaTransporte = floatval($valoresCategoria[3]);
-        $categoriaEducacao = floatval($valoresCategoria[4]);
-        $categoriaLazer = floatval($valoresCategoria[5]);
-        $categoriaImprevisto = floatval($valoresCategoria[6]);
-        $categoriaOutras = floatval($valoresCategoria[7]);
 
         $resumo = [
             'total_receitas' => $resumoDasReceitas,
             'total_despesas' => $resumoDasDespesas,
             'saldo_final' => $resumoDasReceitas - $resumoDasDespesas,
-            'total_alimentacao' => $categoriaAlimentacao,
-            'total_saude' => $categoriaSaude,
-            'total_moradia' => $categoriaMoradia,
-            'total_transporte' => $categoriaTransporte,
-            'total_educacao' => $categoriaEducacao,
-            'total_lazer' => $categoriaLazer,
-            'total_imprevisto' => $categoriaImprevisto,
-            'total_outras' => $categoriaOutras,
+            'total_categorias' => $resumoCategoria,
         ];
 
         return $resumo;
